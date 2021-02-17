@@ -102,9 +102,10 @@ def get_stream(graph):
 
 def run_deterministic_tests():
 
-    for i in range(1,14):
+    for i in range(1,16):
         #note: this path should be with respect to the daphne path!
         graph = daphne(['graph','-i','../CS532-HW2/programs/tests/deterministic/test_{}.daphne'.format(i)])
+        print(graph)
         truth = load_truth('programs/tests/deterministic/test_{}.truth'.format(i))
         ret = deterministic_eval(graph[-1])
         try:
@@ -159,10 +160,9 @@ if __name__ == '__main__':
                     part_acc = []
                     for k in range(1000):
                         part_acc.append(acc[k][j].numpy())
-                    print(part_acc)
-                    np.save(f, np.stack(part_acc))
+                    #print(part_acc)
+                    #np.save(f, np.stack(part_acc))
         else:
             acc = torch.stack(acc)
-            with open(str(i) + "_graph.npy", 'wb') as f:
-                print(acc)
-                np.save(f, acc.numpy())
+            #with open(str(i) + "_graph.npy", 'wb') as f:
+                #np.save(f, acc.numpy())

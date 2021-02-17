@@ -222,9 +222,9 @@ if __name__ == '__main__':
                     part_acc = []
                     for k in range(1000):
                         part_acc.append(acc[k][j].numpy())
-                    print(part_acc)
-                    np.save(f, np.stack(part_acc))
+                    #print(part_acc)
+                    #np.save(f, np.stack(part_acc))
         else:
             acc = torch.stack(acc)
-            with open(str(i) + ".npy", 'wb') as f:
-                np.save(f, acc.numpy())
+            #with open(str(i) + ".npy", 'wb') as f:
+            #    np.save(f, acc.numpy())
