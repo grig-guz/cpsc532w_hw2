@@ -1,0 +1,5 @@
+*.png
+*.npy
+*.pdf
+*.ipynb
+__pycache__
