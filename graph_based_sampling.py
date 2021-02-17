@@ -23,13 +23,22 @@ env = {'normal': dist.Normal,
        'observe*': lambda x, y: None,
        '+': primitives.plus,
        '*': primitives.product,
+       '/': primitives.div,
        'discrete':primitives.discrete,
        'get':primitives.get,
        'mat-transpose': primitives.mat_transpose,
        'mat-tanh': primitives.mat_tanh,
        'mat-add': primitives.mat_add,
        'mat-mul': primitives.mat_mul,
-       'mat-repmat': primitives.mat_repmat
+       'mat-repmat': primitives.mat_repmat,
+       'cons': primitives.cons,
+       'conj': primitives.conj,
+       'first': primitives.first,
+       'second': primitives.second,
+       'last': primitives.last,
+       'append': primitives.append,
+       'rest': primitives.rest,
+
 }
 
 
@@ -97,9 +106,7 @@ def run_deterministic_tests():
         #note: this path should be with respect to the daphne path!
         graph = daphne(['graph','-i','../CS532-HW2/programs/tests/deterministic/test_{}.daphne'.format(i)])
         truth = load_truth('programs/tests/deterministic/test_{}.truth'.format(i))
-        print(graph)
         ret = deterministic_eval(graph[-1])
-        print(ret)
         try:
             assert(is_tol(ret, truth))
         except AssertionError:
@@ -137,8 +144,8 @@ def run_probabilistic_tests():
 if __name__ == '__main__':
 
 
-    #run_deterministic_tests()
-    #run_probabilistic_tests()
+    run_deterministic_tests()
+    run_probabilistic_tests()
 
     for i in range(1,5):
         graph = daphne(['graph','-i','../CS532-HW2/programs/{}.daphne'.format(i)])
@@ -146,7 +153,6 @@ if __name__ == '__main__':
         acc = []
         for _ in range(1000):
             acc.append(sample_from_joint(graph))
-        #
         if i == 4:
             with open(str(i) + "_graph.npy", 'wb') as f:
                 for j in range(4):

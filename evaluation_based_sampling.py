@@ -70,6 +70,14 @@ def evaluate_program(ast, env={}):
         arg1, _ = evaluate_program(ast[1], env)
         arg2, _ = evaluate_program(ast[2], env)
         return primitives.append(arg1, arg2), None
+    elif ast[0] == 'cons':
+        arg1, _ = evaluate_program(ast[1], env)
+        arg2, _ = evaluate_program(ast[2], env)
+        return primitives.cons(arg1, arg2), None
+    elif ast[0] == 'conj':
+        arg1, _ = evaluate_program(ast[1], env)
+        arg2 = [evaluate_program(ast[i])[0] for i in range(2, len(ast))]
+        return primitives.conj(arg1, arg2), None
     elif ast[0] == 'hash-map':
         results = [evaluate_program(ast[i], env)[0] for i in range(1, len(ast))]
         return primitives.hash_map(*results), None
@@ -155,7 +163,7 @@ def get_stream(ast):
 
 def run_deterministic_tests():
 
-    for i in range(1,14):
+    for i in range(14,16):
         #note: this path should be with respect to the daphne path!
         ast = daphne(['desugar', '-i', '../CS532-HW2/programs/tests/deterministic/test_{}.daphne'.format(i)])
         truth = load_truth('programs/tests/deterministic/test_{}.truth'.format(i))
@@ -197,20 +205,17 @@ def run_probabilistic_tests():
 
 if __name__ == '__main__':
 
-    #run_deterministic_tests()
+    run_deterministic_tests()
+    run_probabilistic_tests()
 
-    #run_probabilistic_tests()
 
-
-    for i in range(4,5):
+    for i in range(1,5):
         ast = daphne(['desugar', '-i', '../CS532-HW2/programs/{}.daphne'.format(i)])
         print(ast)
         print('\n\n\nSample of prior of program {}:'.format(i))
         acc = []
         for _ in range(1000):
             acc.append(evaluate_program(ast)[0])
-            print(evaluate_program(ast)[0][2].shape)
-        #acc = torch.stack(acc)
         if i == 4:
             with open(str(i) + ".npy", 'wb') as f:
                 for j in range(4):
@@ -220,5 +225,6 @@ if __name__ == '__main__':
                     print(part_acc)
                     np.save(f, np.stack(part_acc))
         else:
+            acc = torch.stack(acc)
             with open(str(i) + ".npy", 'wb') as f:
                 np.save(f, acc.numpy())

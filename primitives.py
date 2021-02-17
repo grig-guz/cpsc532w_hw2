@@ -76,7 +76,9 @@ def last(arg1):
     return get(arg1, -1)
 
 def conj(arg1, arg2):
-    return get(arg1, -1)
+    for elm in arg2:
+        arg1 = append(arg1, elm)
+    return arg1
 
 def cons(arg1, arg2):
     if isinstance(arg2, list):
