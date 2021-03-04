@@ -94,11 +94,20 @@ def cons(arg1, arg2):
 def normal(arg1, arg2):
     return dist.Normal(arg1, arg2)
 
+def dirac(arg1):
+    return dist.Normal(arg1, 0.0001)
+
 def exponential(arg1):
     return dist.exponential.Exponential(arg1)
 
 def beta(arg1, arg2):
     return dist.beta.Beta(arg1, arg2)
+
+def gamma(arg1, arg2):
+    return dist.gamma.Gamma(arg1, arg2)
+
+def dirichlet(arg1):
+    return dist.dirichlet.Dirichlet(arg1)
 
 def uniform(arg1, arg2):
     return dist.uniform.Uniform(arg1, arg2)
@@ -120,3 +129,9 @@ def mat_mul(arg1, arg2):
 
 def mat_repmat(arg1, arg2, arg3):
     return arg1.repeat(int(arg2), int(arg3))
+
+def and_f(arg1, arg2):
+    return arg1 == 1 and arg2 == 1
+
+def or_f(arg1, arg2):
+    return arg1 == 1 or arg2 == 1

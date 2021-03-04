@@ -5,6 +5,9 @@ from daphne import daphne
 import numpy as np
 import primitives
 from tests import is_tol, run_prob_test,load_truth
+from utils import *
+from mh_gibbs import MHGibbs
+from hmc import HMC
 
 # Put all function mappings from the deterministic language environment to your
 # Python evaluation context here:
@@ -12,6 +15,11 @@ env = {'normal': dist.Normal,
         'beta': primitives.beta,
         'exponential': primitives.exponential,
         'uniform': primitives.uniform,
+        'gamma': primitives.gamma,
+        'dirichlet': primitives.dirichlet,
+        'flip': lambda x: primitives.discrete(torch.tensor([1 - x, x])),
+        'and': primitives.and_f,
+        'or': primitives.or_f,
        'sqrt': torch.sqrt,
        'vector': primitives.vector,
        'put': primitives.put,
@@ -20,12 +28,13 @@ env = {'normal': dist.Normal,
        'if': lambda x, y, z: y if x else z,
        '<': lambda x, y: x < y,
        '>': lambda x, y: x > y,
-       'observe*': lambda x, y: None,
+       'observe*': lambda x, y: x.log_prob(y),
        '+': primitives.plus,
        '*': primitives.product,
        '/': primitives.div,
-       'discrete':primitives.discrete,
-       'get':primitives.get,
+       '=': lambda x, y: x == y,
+       'discrete': primitives.discrete,
+       'get': primitives.get,
        'mat-transpose': primitives.mat_transpose,
        'mat-tanh': primitives.mat_tanh,
        'mat-add': primitives.mat_add,
@@ -38,11 +47,12 @@ env = {'normal': dist.Normal,
        'last': primitives.last,
        'append': primitives.append,
        'rest': primitives.rest,
-
+       'dirac': primitives.dirac,
+       'buffer': {}
 }
 
 
-def deterministic_eval(exp):
+def deterministic_eval(exp, env={}):
     "Evaluation function for the deterministic target language of the graph based representation."
     if type(exp) is list:
         op = exp[0]
@@ -52,42 +62,27 @@ def deterministic_eval(exp):
             for arg in args:
                 new_args.extend(arg)
             args = new_args
-        return env[op](*map(deterministic_eval, args))
-    elif type(exp) is int or type(exp) is float:
+        return env[op](*(deterministic_eval(arg, env) for arg in args))
+    elif type(exp) in [int, float, bool]:
         # We use torch for all numerical objects in our evaluator
-        return torch.tensor(float(exp))
-    elif exp in env:
-        return env[exp]
+        return torch.tensor(float(exp), requires_grad=True)
+    elif exp in env['buffer']:
+        return env['buffer'][exp]
     else:
         print("here", exp)
         raise("Expression type unknown.", exp)
 
-def topological_sort_helper(node, visited, stack, nodes, edges):
-    visited.add(node)
-    if node in edges:
-        for child in edges[node]:
-            if child not in visited:
-                topological_sort_helper(child, visited, stack, nodes, edges)
-    stack.append(node)
-
-def topological_sort(nodes, edges):
-    visited = set()
-    stack = []
-    for node in nodes:
-        if node not in visited:
-            topological_sort_helper(node, visited, stack, nodes, edges)
-    return stack[::-1]
+env['det_eval'] = deterministic_eval
 
 def sample_from_joint(graph):
     "This function does ancestral sampling starting from the prior."
-    # TODO insert your code here
     expr = graph[-1]
     graph = graph[1]
+    env['buffer'] = {}
     top_sort = topological_sort(graph['V'], graph['A'])
     for node in top_sort:
-        env[node] = deterministic_eval(graph['P'][node])
-    return deterministic_eval(expr)
-
+        env['buffer'][node] = deterministic_eval(graph['P'][node], env)
+    return deterministic_eval(expr, env)
 
 def get_stream(graph):
     """Return a stream of prior samples
@@ -98,8 +93,6 @@ def get_stream(graph):
     while True:
         yield sample_from_joint(graph)
 
-#Testing:
-
 def run_deterministic_tests():
 
     for i in range(1,16):
@@ -107,7 +100,7 @@ def run_deterministic_tests():
         graph = daphne(['graph','-i','../CS532-HW2/programs/tests/deterministic/test_{}.daphne'.format(i)])
         print(graph)
         truth = load_truth('programs/tests/deterministic/test_{}.truth'.format(i))
-        ret = deterministic_eval(graph[-1])
+        ret = deterministic_eval(graph[-1], env)
         try:
             assert(is_tol(ret, truth))
         except AssertionError:
@@ -140,20 +133,29 @@ def run_probabilistic_tests():
     print('All probabilistic tests passed')
 
 
-
-
 if __name__ == '__main__':
-
-
-    run_deterministic_tests()
-    run_probabilistic_tests()
-
-    for i in range(1,5):
+    #run_deterministic_tests()
+    #run_probabilistic_tests()
+    """
+    for i in range(5,6):
         graph = daphne(['graph','-i','../CS532-HW2/programs/{}.daphne'.format(i)])
+        print(graph)
+        gibbs = MHGibbs(graph, env, num_samples=50000)
+        gibbs.run_gibbs(prog_num=i)
+    """
+    for i in [5]:#range(1,6):
+        graph = daphne(['graph','-i','../CS532-HW2/programs/{}.daphne'.format(i)])
+        print(graph)
+        hmc = HMC(graph, env)
+        hmc.run_hmc(S=20000, T=10, eps=0.1, M=1, prog_num=i)
+
+        """
         print('\n\n\nSample of prior of program {}:'.format(i))
         acc = []
         for _ in range(1000):
             acc.append(sample_from_joint(graph))
+
+        print(graph)
         if i == 4:
             with open(str(i) + "_graph.npy", 'wb') as f:
                 for j in range(4):
@@ -166,3 +168,4 @@ if __name__ == '__main__':
             acc = torch.stack(acc)
             #with open(str(i) + "_graph.npy", 'wb') as f:
                 #np.save(f, acc.numpy())
+        """
