@@ -8,16 +8,18 @@ from tests import is_tol, run_prob_test,load_truth
 from utils import *
 from mh_gibbs import MHGibbs
 from hmc import HMC
+from bbvi import BBVI
+import distributions
 
 # Put all function mappings from the deterministic language environment to your
 # Python evaluation context here:
-env = {'normal': dist.Normal,
+env = {'normal': distributions.Normal,
         'beta': primitives.beta,
         'exponential': primitives.exponential,
         'uniform': primitives.uniform,
-        'gamma': primitives.gamma,
-        'dirichlet': primitives.dirichlet,
-        'flip': lambda x: primitives.discrete(torch.tensor([1 - x, x])),
+        'gamma': distributions.Gamma,
+        'dirichlet': distributions.Dirichlet,
+        'flip': lambda x: distributions.Categorical(torch.tensor([1 - x, x])),
         'and': primitives.and_f,
         'or': primitives.or_f,
        'sqrt': torch.sqrt,
@@ -33,7 +35,7 @@ env = {'normal': dist.Normal,
        '*': primitives.product,
        '/': primitives.div,
        '=': lambda x, y: x == y,
-       'discrete': primitives.discrete,
+       'discrete': distributions.Categorical,
        'get': primitives.get,
        'mat-transpose': primitives.mat_transpose,
        'mat-tanh': primitives.mat_tanh,
@@ -136,6 +138,11 @@ def run_probabilistic_tests():
 if __name__ == '__main__':
     #run_deterministic_tests()
     #run_probabilistic_tests()
+    for i in range(2, 6):
+        graph = daphne(['graph','-i','../CS532-HW2/programs/{}.daphne'.format(i)])
+        print(graph)
+        bbvi = BBVI(graph, env)
+        bbvi.run_bbvi(T=5000, L=100)
     """
     for i in range(5,6):
         graph = daphne(['graph','-i','../CS532-HW2/programs/{}.daphne'.format(i)])
@@ -143,13 +150,15 @@ if __name__ == '__main__':
         gibbs = MHGibbs(graph, env, num_samples=50000)
         gibbs.run_gibbs(prog_num=i)
     """
-    for i in [5]:#range(1,6):
+    """
+    for i in [1]:#range(1,6):
         graph = daphne(['graph','-i','../CS532-HW2/programs/{}.daphne'.format(i)])
         print(graph)
         hmc = HMC(graph, env)
         hmc.run_hmc(S=20000, T=10, eps=0.1, M=1, prog_num=i)
 
         """
+    """
         print('\n\n\nSample of prior of program {}:'.format(i))
         acc = []
         for _ in range(1000):
