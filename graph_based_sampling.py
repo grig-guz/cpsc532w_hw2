@@ -138,11 +138,12 @@ def run_probabilistic_tests():
 if __name__ == '__main__':
     #run_deterministic_tests()
     #run_probabilistic_tests()
-    for i in range(2, 6):
+    for i in range(4, 6):
         graph = daphne(['graph','-i','../CS532-HW2/programs/{}.daphne'.format(i)])
         print(graph)
         bbvi = BBVI(graph, env)
-        bbvi.run_bbvi(T=5000, L=100)
+        #bbvi.run_bbvi(T=10000, L=10, prog_num=i)
+        bbvi.run_bbvi(T=3000, L=3, prog_num=i)
     """
     for i in range(5,6):
         graph = daphne(['graph','-i','../CS532-HW2/programs/{}.daphne'.format(i)])

@@ -175,8 +175,6 @@ if __name__ == '__main__':
 
     #check the result is correct:
     print(dg.Parameters())
-
-
     #note: Parameters() returns a list of tensors that parametrize the distributions
     # gradients can be taken with respect to these parameters, and you can assume gradient updates are "safe"
     # i.e., under the hood, parameters constrained to the positive reals are transformed so that they can be optimized
